@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "vercel dev --listen 3000",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -39,6 +39,7 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
+    "vercel": "^41.0.0",
     "vitest": "^4.1.4"
   }
 }

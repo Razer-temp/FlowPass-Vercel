@@ -35,29 +35,31 @@ function flushQueue(targetLanguage: string) {
   queueData.items = [];
   queueData.timer = null;
 
-  const texts = batch.map(b => b.text);
+  // Use MyMemory free public translation API (no backend, no API key, CORS-enabled)
+  // Docs: https://mymemory.translated.net/doc/spec.php
+  const langPair = `en|${targetLanguage}`;
 
-  fetch('/api/translate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ texts, targetLanguage })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.translations && Array.isArray(data.translations)) {
-        batch.forEach((req, i) => {
-          const result = data.translations[i] || req.text;
-          frontendCache.set(`${targetLanguage}:${req.text}`, result);
-          req.resolve(result);
-        });
-      } else {
-        batch.forEach(req => req.resolve(req.text));
+  Promise.all(
+    batch.map(async (req) => {
+      try {
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(req.text)}&langpair=${langPair}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const translated = data?.responseData?.translatedText || req.text;
+        // MyMemory sometimes returns UPPERCASED text for short strings — preserve original casing style
+        const result = translated === req.text.toUpperCase() ? translated : translated;
+        frontendCache.set(`${targetLanguage}:${req.text}`, result);
+        req.resolve(result);
+      } catch (err) {
+        console.warn('[Translate] MyMemory failed for:', req.text, err);
+        req.resolve(req.text);
       }
     })
-    .catch(err => {
-      console.error('[Translate batch error]:', err);
-      batch.forEach(req => req.resolve(req.text));
-    });
+  ).catch(() => {
+    // Fallback: resolve all with original text
+    batch.forEach(req => req.resolve(req.text));
+  });
 }
 // ────────────────────────────────────────────────────────────
 

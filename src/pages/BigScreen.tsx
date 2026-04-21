@@ -5,6 +5,10 @@
  * or projectors. Shows zone statuses with large countdown timers,
  * an announcement ticker, and a QR code for attendee registration.
  * Automatically enters fullscreen mode on mount.
+ *
+ * Translation: Fixed UI strings use a built-in static dictionary
+ * (instant, offline, zero-API). Dynamic announcements use the
+ * TranslateText API component as a best-effort fallback.
  */
 
 import { useState, useEffect } from 'react';
@@ -13,6 +17,7 @@ import { supabase } from '../lib/supabase';
 import { QRCodeSVG } from 'qrcode.react';
 import { Megaphone, AlertTriangle, CheckCircle2, PauseCircle } from 'lucide-react';
 import TranslateText from '../components/TranslateText';
+import { getTranslator } from '../lib/translations';
 import type { FlowEvent, FlowZone, FlowPass, FlowAnnouncement, GateDisplay } from '../types';
 import { REALTIME_POLL_INTERVAL_MS, COUNTDOWN_VISIBILITY_MS, RECENT_ANNOUNCEMENTS_LIMIT } from '../lib/constants';
 
@@ -148,19 +153,18 @@ export default function BigScreen() {
   const blockedGates = gates.filter(g => g.status === 'BLOCKED');
   const hasBlockedGate = blockedGates.length > 0;
   
-  // Remote language orchestration
+  // Remote language orchestration — static dictionary lookup (instant, no API)
   const displayLanguage = (event.gate_status?.__display_language as string) || 'en';
-
-  const T = ({ text }: { text: string }) => <TranslateText text={text} targetLanguage={displayLanguage} />;
+  const t = getTranslator(displayLanguage);
 
   if (allCleared) {
     return (
       <div className="h-screen w-screen bg-[#0A2E1A] flex flex-col items-center justify-center text-white p-8 text-center relative overflow-hidden font-body">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-go to-transparent" />
         <CheckCircle2 className="w-32 h-32 md:w-48 md:h-48 text-go mb-8 z-10" />
-        <h1 className="text-5xl md:text-7xl lg:text-[10vw] font-heading font-bold mb-6 z-10 leading-none"><T text="ALL ZONES CLEARED" /></h1>
-        <p className="text-2xl md:text-4xl lg:text-5xl mb-4 z-10"><T text="Thank you for using FlowPass." /></p>
-        <p className="text-2xl md:text-4xl lg:text-5xl mb-12 z-10"><T text="Everyone has exited safely." /></p>
+        <h1 className="text-5xl md:text-7xl lg:text-[10vw] font-heading font-bold mb-6 z-10 leading-none">{t('ALL ZONES CLEARED')}</h1>
+        <p className="text-2xl md:text-4xl lg:text-5xl mb-4 z-10">{t('Thank you for using FlowPass.')}</p>
+        <p className="text-2xl md:text-4xl lg:text-5xl mb-12 z-10">{t('Everyone has exited safely.')}</p>
         <div className="text-xl md:text-3xl text-white/70 z-10">
           <p>{event.name}</p>
           <p>{event.venue} — {new Date(event.date).toLocaleDateString()}</p>
@@ -173,11 +177,11 @@ export default function BigScreen() {
     return (
       <div className="h-screen w-screen bg-[#0A0A2E] flex flex-col items-center justify-center text-white p-8 text-center border-8 border-amber-500/50 animate-pulse font-body">
         <PauseCircle className="w-32 h-32 md:w-48 md:h-48 text-amber-500 mb-8 z-10" />
-        <h1 className="text-5xl md:text-7xl lg:text-[8vw] font-heading font-bold mb-6 leading-none text-amber-500"><T text="ALL EXITS PAUSED" /></h1>
-        <p className="text-3xl md:text-5xl lg:text-6xl mb-4"><T text="Please remain in your seats." /></p>
-        <p className="text-3xl md:text-5xl lg:text-6xl mb-12"><T text="Exit will resume shortly." /></p>
+        <h1 className="text-5xl md:text-7xl lg:text-[8vw] font-heading font-bold mb-6 leading-none text-amber-500">{t('ALL EXITS PAUSED')}</h1>
+        <p className="text-3xl md:text-5xl lg:text-6xl mb-4">{t('Please remain in your seats.')}</p>
+        <p className="text-3xl md:text-5xl lg:text-6xl mb-12">{t('Exit will resume shortly.')}</p>
         <div className="text-2xl md:text-4xl text-white/70">
-          <p><T text="Stay calm · Follow instructions · Staff are here to help" /></p>
+          <p>{t('Stay calm · Follow instructions · Staff are here to help')}</p>
         </div>
       </div>
     );
@@ -196,7 +200,7 @@ export default function BigScreen() {
             </div>
             <div className="flex items-center gap-2 bg-stop/20 text-stop px-3 py-1 lg:px-4 lg:py-2 rounded-full border border-stop/30 shadow-[0_0_15px_rgba(255,59,59,0.2)]">
               <div className="w-3 h-3 rounded-full bg-stop animate-pulse" />
-              <span className="text-xs lg:text-sm font-bold tracking-widest hidden sm:block"><T text="EXIT ACTIVE" /></span>
+              <span className="text-xs lg:text-sm font-bold tracking-widest hidden sm:block">{t('EXIT ACTIVE')}</span>
             </div>
           </div>
 
@@ -215,20 +219,20 @@ export default function BigScreen() {
           {/* Overall Progress Block */}
           <div className="bg-black/30 rounded-3xl p-5 lg:p-8 border border-white/5 shadow-inner">
             <div className="flex justify-between items-baseline mb-4">
-              <div className="text-sm lg:text-base text-dim uppercase font-bold tracking-wider"><T text="Overall Progress" /></div>
-              <div className="text-amber-500 font-bold text-sm lg:text-lg">{remainingCount.toLocaleString()} <T text="remain" /></div>
+              <div className="text-sm lg:text-base text-dim uppercase font-bold tracking-wider">{t('Overall Progress')}</div>
+              <div className="text-amber-500 font-bold text-sm lg:text-lg">{remainingCount.toLocaleString()} {t('remain')}</div>
             </div>
             
             <div className="w-full h-6 lg:h-8 bg-black rounded-full overflow-hidden relative mb-4 border border-white/10">
               <div className="absolute top-0 left-0 h-full bg-go transition-all duration-1000 shadow-[0_0_10px_#00FF87]" style={{ width: `${percentExited}%` }} />
               <div className="absolute inset-0 flex items-center justify-center text-sm lg:text-base font-bold mix-blend-difference text-white">
-                {percentExited}% <T text="cleared" />
+                {percentExited}% {t('cleared')}
               </div>
             </div>
             
             <div className="flex justify-between items-center text-sm lg:text-xl">
-              <span>{totalPasses.toLocaleString()} <T text="total" /></span>
-              <span className="text-go font-bold">{exitedCount.toLocaleString()} <T text="exited" /> ✅</span>
+              <span>{totalPasses.toLocaleString()} {t('total')}</span>
+              <span className="text-go font-bold">{exitedCount.toLocaleString()} {t('exited')} ✅</span>
             </div>
           </div>
         </div>
@@ -253,7 +257,7 @@ export default function BigScreen() {
               <p className="text-base lg:text-xl font-bold bg-black/60 px-4 py-3 rounded-xl border border-white/10 mb-2 truncate break-all">
                 {window.location.host}/register/...{eventId?.slice(0,4)}
               </p>
-              <p className="text-sm lg:text-base text-dim"><T text="Scan to get your FlowPass" /></p>
+              <p className="text-sm lg:text-base text-dim">{t('Scan to get your FlowPass')}</p>
             </div>
           </div>
         </div>
@@ -314,19 +318,19 @@ export default function BigScreen() {
                   
                   <h2 className="text-5xl lg:text-7xl font-timer tracking-widest mb-4">{zone.name}</h2>
                   <div className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-heading font-bold mb-8 ${isGo ? 'animate-pulse text-white' : ''}`}>
-                    <T text={statusText} />
+                    {t(statusText)}
                   </div>
                   
                   <div className="w-full h-px bg-white/20 mb-8" />
                   
                   {zone.status === 'ACTIVE' ? (
-                    <div className="text-4xl lg:text-5xl xl:text-6xl font-heading font-bold text-go mb-8"><T text="PROCEED TO GATES" /></div>
+                    <div className="text-4xl lg:text-5xl xl:text-6xl font-heading font-bold text-go mb-8">{t('PROCEED TO GATES')}</div>
                   ) : zone.status === 'CLEARED' ? (
-                    <div className="text-3xl lg:text-4xl text-dim mb-8"><T text="Cleared at" /> {new Date(zone.exit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="text-3xl lg:text-4xl text-dim mb-8">{t('Cleared at')} {new Date(zone.exit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   ) : zone.status === 'HOLD' ? (
                     <div className="text-3xl lg:text-4xl mb-8 leading-tight">
-                      <p><T text="Remain seated." /></p>
-                      <p className="text-dim text-lg lg:text-2xl mt-2"><T text="Exit will resume shortly." /></p>
+                      <p>{t('Remain seated.')}</p>
+                      <p className="text-dim text-lg lg:text-2xl mt-2">{t('Exit will resume shortly.')}</p>
                     </div>
                   ) : (
                     <div className="text-[12vw] sm:text-[10vw] md:text-7xl lg:text-8xl xl:text-[8rem] font-timer tracking-widest mb-8 leading-none">
@@ -340,7 +344,7 @@ export default function BigScreen() {
                     {zone.gates.join(' & ')}
                   </div>
                   <div className="text-xl lg:text-2xl text-white/60 uppercase tracking-widest font-semibold">
-                    <T text="Assigned Exits" />
+                    {t('Assigned Exits')}
                   </div>
                 </div>
               );
@@ -354,20 +358,21 @@ export default function BigScreen() {
             {hasBlockedGate ? (
               <div className="text-3xl lg:text-5xl font-heading font-bold text-white flex items-center gap-6 px-12 h-full">
                 <AlertTriangle className="w-12 h-12 lg:w-16 lg:h-16 text-stop" />
-                <span>⚠️ <T text="Gate" /> {blockedGates[0].name} <T text="is currently closed — affected zones please follow staff instructions" /></span>
+                <span>⚠️ {t('Gate')} {blockedGates[0].name} {t('is currently closed — affected zones please follow staff instructions')}</span>
               </div>
             ) : announcements.length > 0 ? (
               announcements.map((ann, idx) => (
                 <div key={idx} className="text-3xl lg:text-5xl font-heading font-bold text-white flex items-center px-12 h-full">
                   <Megaphone className="w-10 h-10 lg:w-16 lg:h-16 mr-6 text-blue-400" />
-                  <T text={ann.message} />
+                  {/* Dynamic announcements still use API-based translation (best-effort) */}
+                  <TranslateText text={ann.message} targetLanguage={displayLanguage} />
                   <span className="mx-16 text-dim opacity-50">· · ·</span>
                 </div>
               ))
             ) : (
               <div className="text-3xl lg:text-5xl font-heading font-bold text-white flex items-center px-12 h-full">
                 <Megaphone className="w-10 h-10 lg:w-16 lg:h-16 mr-6 text-blue-400" />
-                <T text="Please follow your FlowPass instructions and exit via your assigned gate" />
+                {t('Please follow your FlowPass instructions and exit via your assigned gate')}
               </div>
             )}
           </div>
