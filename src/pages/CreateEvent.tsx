@@ -6,7 +6,7 @@
  * Generates zones, gates, and the Supabase event record on launch.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
@@ -22,6 +22,7 @@ import DatePicker from '../components/ui/DatePicker';
 import TimePicker from '../components/ui/TimePicker';
 import { trackEvent } from '../lib/analytics';
 import VenueMap from '../components/pass/VenueMap';
+import { loadGoogleMapsScript } from '../lib/googleMaps';
 
 interface EventDraft {
   eventName: string;
@@ -60,6 +61,28 @@ export default function CreateEvent() {
   });
   const [eventId, setEventId] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const venueRef = useRef<HTMLInputElement>(null);
+
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    loadGoogleMapsScript(() => {
+      if (!venueRef.current || !window.google) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(venueRef.current, {
+        fields: ['name', 'formatted_address', 'geometry'],
+        types: ['establishment', 'geocode'],
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.name || place.formatted_address) {
+          updateDraft({ 
+            venueName: place.name || place.formatted_address || '' 
+          });
+        }
+      });
+    });
+  }, []);
 
   const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://flowpass.app';
   const displayOrigin = baseOrigin.replace(/^https?:\/\//, '');
@@ -244,6 +267,7 @@ export default function CreateEvent() {
                   {draft.venueName && <CheckCircle2 className="w-4 h-4 text-go" />}
                 </label>
                 <input 
+                  ref={venueRef}
                   type="text" 
                   value={draft.venueName}
                   onChange={e => updateDraft({ venueName: e.target.value })}

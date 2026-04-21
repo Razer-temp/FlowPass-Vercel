@@ -71,3 +71,27 @@ export function getDirectionsUrl(destination: string): string {
 export function isMapsAvailable(): boolean {
   return !!MAPS_API_KEY;
 }
+
+/**
+ * Loads the Google Maps JavaScript API script dynamically.
+ * Required for Places Autocomplete.
+ */
+export function loadGoogleMapsScript(onLoad: () => void): void {
+  if (typeof window === 'undefined') return;
+  if (window.google?.maps) {
+    onLoad();
+    return;
+  }
+
+  // Check if script is already loading
+  const existingScript = document.getElementById('google-maps-script');
+  if (existingScript) return;
+
+  const script = document.createElement('script');
+  script.id = 'google-maps-script';
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`;
+  script.async = true;
+  script.defer = true;
+  script.onload = onLoad;
+  document.head.appendChild(script);
+}

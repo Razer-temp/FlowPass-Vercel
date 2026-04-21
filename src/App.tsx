@@ -22,6 +22,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import { trackPageView } from './lib/analytics';
+import DevDiagnostics from './components/debug/DevDiagnostics';
 
 function AppContent() {
   const location = useLocation();
@@ -55,6 +56,7 @@ function AppContent() {
         </Routes>
       </main>
       {!hideNavFooter && <Footer />}
+      <DevDiagnostics />
     </div>
   );
 }
