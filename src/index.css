@@ -9,6 +9,8 @@
   --color-stop: #FF3B3B;
   --color-done: #4A4A6A;
   --color-dim: #8888AA;
+  --color-primary: #00FF87;
+  --primary-rgb: 0, 255, 135;
 
   --font-heading: "Syne", sans-serif;
   --font-body: "DM Sans", sans-serif;

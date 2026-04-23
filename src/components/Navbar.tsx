@@ -12,9 +12,9 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl tracking-tight">
-          <Ticket className="w-6 h-6 text-go" />
-          FLOWPASS
+        <Link to="/" className="flex items-center gap-3 font-heading font-bold text-xl">
+          <img src="/logo.png" alt="FlowPass Logo" className="w-7 h-7" />
+          <span className="tracking-[0.2em] mt-1">FLOWPASS</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-dim">
           <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
